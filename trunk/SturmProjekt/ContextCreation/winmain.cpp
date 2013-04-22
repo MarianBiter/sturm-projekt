@@ -3,9 +3,18 @@
 #include "GL\wglew.h"
 #include <tchar.h>
 
+GLuint vao;
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
+
+void initScene()
+{
+	glGenVertexArrays(1,&vao);
+	glBindVertexArray(vao);
+
+
+}
 
 int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance,PSTR szCmdLine, int iCmdShow)
 {
@@ -144,7 +153,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance,PSTR szCmdLine,
 
 
 	int attributesContext[] = { WGL_CONTEXT_MAJOR_VERSION_ARB,4,
-								WGL_CONTEXT_MINOR_VERSION_ARB,3,
+								WGL_CONTEXT_MINOR_VERSION_ARB,2,
 								/*WGL_CONTEXT_FLAGS_ARB,WGL_CONTEXT_DEBUG_BIT_ARB,*/
 								WGL_CONTEXT_PROFILE_MASK_ARB,WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
 								0};
