@@ -15,7 +15,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance,PSTR szCmdLine,
 	USHORT height = 650;
 
 	winclass.cbSize = sizeof(WNDCLASSEX);
-	winclass.style = CS_HREDRAW | CS_VREDRAW;
+	winclass.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
 	winclass.lpfnWndProc = WndProc;
 	winclass.cbClsExtra = 0;
 	winclass.cbWndExtra = 0;
@@ -55,15 +55,22 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance,PSTR szCmdLine,
     dummyWinclass.hInstance = (HINSTANCE)GetModuleHandle(NULL);
     dummyWinclass.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
     dummyWinclass.lpszClassName = _T("DUMMY");
-    RegisterClass( &dummyWinclass );
+    if(RegisterClass( &dummyWinclass ) == 0)
+	{
+		MessageBox(NULL,_T("Could not register dummy class"),_T("GLEW failed"),MB_OK);
+	}
 
-	HWND dummyHwnd=CreateWindow(_T("FREEGLUT_dummy"),
+	HWND dummyHwnd=CreateWindow(_T("DUMMY"),
 								_T(""),
 								WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_OVERLAPPEDWINDOW , 
 								0,0,0,0,0,0, 
 								dummyWinclass.hInstance,
 								0 );
 
+	if(dummyHwnd ==  NULL)
+	{
+		MessageBox(NULL,_T("Could not create dummy window"),_T("GLEW failed"),MB_OK);
+	}
 
 	HDC dummyHdc = GetDC(dummyHwnd);
 
@@ -89,10 +96,21 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance,PSTR szCmdLine,
     };
 
 	int pixelformat;
-	SetPixelFormat( dummyHdc, pixelformat, &pfd );
 
-	HGLRC dummyRc = wglCreateContext( hDC );
-    wglMakeCurrent(hDC, dummyRc);
+	pixelformat = ChoosePixelFormat(dummyHdc,&pfd);
+	
+	if(pixelformat == 0)
+	{
+		MessageBox(NULL,_T("Could not choose dummy pixel format"),_T("GLEW failed"),MB_OK);
+	}
+
+	if(!SetPixelFormat( dummyHdc, pixelformat, &pfd ))
+	{
+		MessageBox(NULL,_T("Could not set dummy pixel format"),_T("GLEW failed"),MB_OK);
+	}
+
+	HGLRC dummyRc = wglCreateContext( dummyHdc );
+    wglMakeCurrent(dummyHdc, dummyRc);
 
 	GLenum err = glewInit();
 	if (GLEW_OK != err)
@@ -115,6 +133,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance,PSTR szCmdLine,
 									WGL_DEPTH_BITS_ARB, 24,
 									WGL_STENCIL_BITS_ARB, 8,
 									WGL_DOUBLE_BUFFER_ARB,GL_TRUE,
+									WGL_SWAP_METHOD_ARB,WGL_SWAP_EXCHANGE_ARB,
 									0};
 	float fAttributes[] = { 0, 0 };
 	int iPixelFormat;
@@ -126,7 +145,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance,PSTR szCmdLine,
 
 	int attributesContext[] = { WGL_CONTEXT_MAJOR_VERSION_ARB,4,
 								WGL_CONTEXT_MINOR_VERSION_ARB,3,
-								WGL_CONTEXT_FLAGS_ARB,WGL_CONTEXT_DEBUG_BIT_ARB,
+								/*WGL_CONTEXT_FLAGS_ARB,WGL_CONTEXT_DEBUG_BIT_ARB,*/
 								WGL_CONTEXT_PROFILE_MASK_ARB,WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
 								0};
 
