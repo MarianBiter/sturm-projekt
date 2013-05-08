@@ -2,16 +2,82 @@
 #include "GL\glew.h"
 #include "GL\wglew.h"
 #include <tchar.h>
+#include <cstdio>
+#include <cstdlib>
 
 GLuint vao;
+GLuint buffer;
+GLuint vertexShader;
+GLuint fragmentShader;
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
+
+GLchar * textFileRead(const char* filename)
+{
+	FILE *fp = NULL;
+	GLchar* content;
+	unsigned int  count = 0;
+	fp = fopen(filename,"rt");
+
+	if(fp == NULL)
+	{
+		return NULL;
+	}
+
+	fseek(fp,0,SEEK_END);
+	count = ftell(fp);
+	rewind(fp);
+
+	content = new GLchar[count+1];
+
+	count = fread(content,sizeof(GLchar),count,fp);
+	content[count] = '\0';
+
+	fclose(fp);
+
+	return content;
+
+
+}
+void loadShaders()
+{
+	GLint retVal;
+
+	vertexShader = glCreateShader(GL_VERTEX_SHADER);
+	const GLchar* vertexShaderSource = textFileRead("triangles.vert");
+	glShaderSource(vertexShader,1,&vertexShaderSource,NULL);
+	glCompileShader(vertexShader);
+	glGetShaderiv(vertexShader,GL_COMPILE_STATUS,&retVal);
+
+	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+	const GLchar* fragmentShaderSource = textFileRead("triangles.frag");
+	glShaderSource(fragmentShader,1,&fragmentShaderSource,NULL);
+	glCompileShader(fragmentShader);
+	glGetShaderiv(fragmentShader,GL_COMPILE_STATUS,&retVal);
+}
 
 
 void initScene()
 {
 	glGenVertexArrays(1,&vao);
 	glBindVertexArray(vao);
+
+	GLfloat vertices[6][2] =
+	{
+		{-0.9,-0.9},
+		{0.85,-0.9},
+		{-0.9,0.85},
+		{0.9,-0.85},
+		{0.90,0.90},
+		{-0.85,0.9}
+	};
+
+	glGenBuffers(1,&buffer);
+	glBindBuffer(GL_VERTEX_ARRAY,buffer);
+	glBufferData(GL_VERTEX_ARRAY,sizeof(vertices),vertices,GL_STATIC_DRAW);
+	
+	loadShaders();
 
 
 }
@@ -153,7 +219,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance,PSTR szCmdLine,
 
 
 	int attributesContext[] = { WGL_CONTEXT_MAJOR_VERSION_ARB,4,
-								WGL_CONTEXT_MINOR_VERSION_ARB,2,
+								WGL_CONTEXT_MINOR_VERSION_ARB,3,
 								/*WGL_CONTEXT_FLAGS_ARB,WGL_CONTEXT_DEBUG_BIT_ARB,*/
 								WGL_CONTEXT_PROFILE_MASK_ARB,WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
 								0};
@@ -164,6 +230,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance,PSTR szCmdLine,
 
 	const GLubyte* string = glGetString(GL_VERSION);
 
+	initScene();
 
 }
 
