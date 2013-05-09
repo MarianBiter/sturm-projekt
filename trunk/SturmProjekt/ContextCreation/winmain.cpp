@@ -12,6 +12,15 @@ GLuint fragmentShader;
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
+GLchar* getShaderCompileError(GLuint shader)
+{
+	GLint length;
+	glGetShaderiv(shader,GL_INFO_LOG_LENGTH,&length);
+	GLchar* errorMessage;
+	errorMessage = new GLchar[length+1];
+	glGetShaderInfoLog(shader,length,NULL,errorMessage);
+	return errorMessage;
+}
 
 GLchar * textFileRead(const char* filename)
 {
@@ -49,12 +58,23 @@ void loadShaders()
 	glShaderSource(vertexShader,1,&vertexShaderSource,NULL);
 	glCompileShader(vertexShader);
 	glGetShaderiv(vertexShader,GL_COMPILE_STATUS,&retVal);
-
+	if(retVal != GL_TRUE)
+	{
+		GLchar* errorMsg = getShaderCompileError(vertexShader);
+		delete[] errorMsg;
+	}
 	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 	const GLchar* fragmentShaderSource = textFileRead("triangles.frag");
 	glShaderSource(fragmentShader,1,&fragmentShaderSource,NULL);
 	glCompileShader(fragmentShader);
 	glGetShaderiv(fragmentShader,GL_COMPILE_STATUS,&retVal);
+	if(retVal != GL_TRUE)
+	{
+		GLchar* errorMsg = getShaderCompileError(fragmentShader);
+		delete[] errorMsg;
+	}
+
+	
 }
 
 
