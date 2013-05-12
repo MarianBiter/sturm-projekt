@@ -9,6 +9,7 @@ GLuint vao;
 GLuint buffer;
 GLuint vertexShader;
 GLuint fragmentShader;
+GLuint program;
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -19,6 +20,17 @@ GLchar* getShaderCompileError(GLuint shader)
 	GLchar* errorMessage;
 	errorMessage = new GLchar[length+1];
 	glGetShaderInfoLog(shader,length,NULL,errorMessage);
+	return errorMessage;
+}
+
+GLchar* getProgramLinkError(GLuint program)
+{
+	GLint length;
+	glGetProgramiv(program,GL_INFO_LOG_LENGTH,&length);
+	GLchar* errorMessage;
+	errorMessage =  new GLchar[length+1];
+	glGetProgramInfoLog(program,length,NULL,errorMessage);
+
 	return errorMessage;
 }
 
@@ -74,6 +86,20 @@ void loadShaders()
 		delete[] errorMsg;
 	}
 
+
+	program = glCreateProgram();
+
+	glAttachShader(program,vertexShader);
+	glAttachShader(program,fragmentShader);
+
+	glLinkProgram(program);
+	glGetProgramiv(program,GL_LINK_STATUS,&retVal);
+	if(retVal!= GL_TRUE)
+	{
+		GLchar* errorMsg = getProgramLinkError(program);
+		delete[] errorMsg;
+	}
+
 	
 }
 
@@ -94,11 +120,27 @@ void initScene()
 	};
 
 	glGenBuffers(1,&buffer);
-	glBindBuffer(GL_VERTEX_ARRAY,buffer);
-	glBufferData(GL_VERTEX_ARRAY,sizeof(vertices),vertices,GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER,buffer);
+	glBufferData(GL_ARRAY_BUFFER,sizeof(vertices),vertices,GL_STATIC_DRAW);
 	
 	loadShaders();
 
+	glUseProgram(program);
+	glVertexAttribPointer(0,2,GL_FLOAT,GL_FALSE,0,(void*)0);
+	glEnableVertexAttribArray(0);
+
+	//glClearColor(1.0,0.0,0.0,1.0);
+
+}
+
+void display()
+{
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	glBindVertexArray(vao);
+	glDrawArrays(GL_TRIANGLES,0,6);
+
+	glFlush();
 
 }
 
@@ -252,9 +294,42 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance,PSTR szCmdLine,
 
 	initScene();
 
+	ShowWindow(hWnd,SW_SHOW);
+
+	MSG msg;
+
+    // Start main loop
+	while (1) 
+    {
+        // Did we recieve a message, or are we idling ?
+		if ( PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) ) 
+        {
+			if (msg.message == WM_QUIT) break;
+			TranslateMessage( &msg );
+			DispatchMessage ( &msg );
+		} 
+        else 
+        {
+			display();
+			SwapBuffers(hDC);
+
+		} // End If messages waiting
+	
+    } // Until quit message is receieved
+
+
 }
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	return DefWindowProc(hwnd,msg,wParam,lParam);
+	switch (msg)
+    {		
+        case WM_CLOSE:
+			PostQuitMessage(0);
+			break;
+		default:
+			return DefWindowProc(hwnd,msg,wParam,lParam);
+	}
+	
+	return 0;
 }
