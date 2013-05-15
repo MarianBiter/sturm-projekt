@@ -4,6 +4,9 @@
 #include <tchar.h>
 #include <cstdio>
 #include <cstdlib>
+#include <fstream>
+#include <sstream>
+
 
 GLuint vao;
 GLuint buffer;
@@ -34,40 +37,22 @@ GLchar* getProgramLinkError(GLuint program)
 	return errorMessage;
 }
 
-GLchar * textFileRead(const char* filename)
+std::string textFileRead(const char* filename)
 {
-	FILE *fp = NULL;
-	GLchar* content;
-	unsigned int  count = 0;
-	fp = fopen(filename,"rt");
-
-	if(fp == NULL)
-	{
-		return NULL;
-	}
-
-	fseek(fp,0,SEEK_END);
-	count = ftell(fp);
-	rewind(fp);
-
-	content = new GLchar[count+1];
-
-	count = fread(content,sizeof(GLchar),count,fp);
-	content[count] = '\0';
-
-	fclose(fp);
-
-	return content;
-
-
+	std::ifstream vertexFile(filename);
+	std::stringstream vertexShaderSource;
+	vertexShaderSource << vertexFile.rdbuf();
+	vertexFile.close();
+	return vertexShaderSource.str();
 }
 void loadShaders()
 {
 	GLint retVal;
 
 	vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	const GLchar* vertexShaderSource = textFileRead("triangles.vert");
-	glShaderSource(vertexShader,1,&vertexShaderSource,NULL);
+	std::string vertShaderSource = textFileRead("triangles.vert");
+	const char* aux = vertShaderSource.c_str();
+	glShaderSource(vertexShader,1,static_cast<const GLchar**>(&aux),NULL);
 	glCompileShader(vertexShader);
 	glGetShaderiv(vertexShader,GL_COMPILE_STATUS,&retVal);
 	if(retVal != GL_TRUE)
@@ -76,8 +61,9 @@ void loadShaders()
 		delete[] errorMsg;
 	}
 	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	const GLchar* fragmentShaderSource = textFileRead("triangles.frag");
-	glShaderSource(fragmentShader,1,&fragmentShaderSource,NULL);
+	std::string fragmentShaderSource = textFileRead("triangles.frag");
+	aux = fragmentShaderSource.c_str();
+	glShaderSource(fragmentShader,1,static_cast<const GLchar**>(&aux),NULL);
 	glCompileShader(fragmentShader);
 	glGetShaderiv(fragmentShader,GL_COMPILE_STATUS,&retVal);
 	if(retVal != GL_TRUE)
@@ -129,7 +115,7 @@ void initScene()
 	glVertexAttribPointer(0,2,GL_FLOAT,GL_FALSE,0,(void*)0);
 	glEnableVertexAttribArray(0);
 
-	//glClearColor(1.0,0.0,0.0,1.0);
+	glClearColor(1.0,1.0,1.0,1.0);
 
 }
 
