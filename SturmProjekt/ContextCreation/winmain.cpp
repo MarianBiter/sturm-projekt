@@ -13,6 +13,8 @@ GLuint buffer;
 GLuint vertexShader;
 GLuint fragmentShader;
 GLuint program;
+float offsetX = 0.0;
+float offsetY = 0.0;
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -95,14 +97,14 @@ void initScene()
 	glGenVertexArrays(1,&vao);
 	glBindVertexArray(vao);
 
-	GLfloat vertices[6][2] =
+	GLfloat vertices[6][4] =
 	{
-		{-0.9,-0.9},
-		{0.85,-0.9},
-		{-0.9,0.85},
-		{0.9,-0.85},
-		{0.90,0.90},
-		{-0.85,0.9}
+		{-0.1,-0.1,0,2},
+		{0.1,-0.1,0,2},
+		{-0.1,0.1,0,2},
+		{0.1,-0.1,0,2},
+		{0.1,0.1,0,2},
+		{-0.1,0.1,0,2}
 	};
 
 	glGenBuffers(1,&buffer);
@@ -112,7 +114,7 @@ void initScene()
 	loadShaders();
 
 	glUseProgram(program);
-	glVertexAttribPointer(0,2,GL_FLOAT,GL_FALSE,0,(void*)0);
+	glVertexAttribPointer(0,4,GL_FLOAT,GL_FALSE,0,(void*)0);
 	glEnableVertexAttribArray(0);
 
 	glClearColor(1.0,1.0,1.0,1.0);
@@ -122,8 +124,9 @@ void initScene()
 void display()
 {
 	glClear(GL_COLOR_BUFFER_BIT);
-
 	glBindVertexArray(vao);
+	GLint loc = glGetUniformLocation(program,"offset");
+	glUniform2f(loc,offsetX,offsetY);
 	glDrawArrays(GL_TRIANGLES,0,6);
 
 	glFlush();
@@ -134,7 +137,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance,PSTR szCmdLine,
 {
 
 	WNDCLASSEX winclass;
-	USHORT width = 800;
+	USHORT width = 650;
 	USHORT height = 650;
 
 	winclass.cbSize = sizeof(WNDCLASSEX);
@@ -312,6 +315,23 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {		
         case WM_CLOSE:
 			PostQuitMessage(0);
+			break;
+		case WM_KEYDOWN:
+			switch(wParam)
+			{
+				case VK_UP:
+					offsetY+=0.1;
+					break;
+				case VK_DOWN:
+					offsetY-=0.1;
+					break;
+				case VK_LEFT:
+					offsetX-=0.1;
+					break;
+				case VK_RIGHT:
+					offsetX+=0.1;
+					break;
+			}
 			break;
 		default:
 			return DefWindowProc(hwnd,msg,wParam,lParam);
