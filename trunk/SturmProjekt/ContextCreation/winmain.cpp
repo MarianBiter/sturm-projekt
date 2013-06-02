@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <sstream>
+#include "Matrix4x4.h"
 
 
 GLuint vao;
@@ -97,25 +98,68 @@ void initScene()
 	glGenVertexArrays(1,&vao);
 	glBindVertexArray(vao);
 
-	GLfloat vertices[6][4] =
+	GLfloat vertexData[] =
 	{
-		{-0.1,-0.1,0,2},
-		{0.1,-0.1,0,2},
-		{-0.1,0.1,0,2},
-		{0.1,-0.1,0,2},
-		{0.1,0.1,0,2},
-		{-0.1,0.1,0,2}
+		-0.5,0.5,-0.5,1.0,
+		0.5,-0.5,-0.5,1.0,
+		-0.5,-0.5,-0.5,1.0,
+		-0.5,0.5,-0.5,1.0,
+		0.5,0.5,-0.5,1.0,
+		0.5,-0.5,-0.5,1.0,
+
+		0.5,0.5,-0.5,1.0,
+		0.5,-0.5,-0.5,1.0,
+		0.5,-0.5,-0.5,1.0,
+		0.5,0.5,-0.5,1.0,
+		0.5,0.5,0.5,1.0,
+		0.5,-0.5,-0.5,1.0,
+
+		-0.5,0.5,0.5,1.0,
+		0.5,0.5,-0.5,1.0,
+		-0.5,0.5,-0.5,1.0,
+		-0.5,0.5,0.5,1.0,
+		0.5,0.5,0.5,1.0,
+		0.5,0.5,-0.5,1.0,
+
+		//vertex color
+		1.0,0.0,0.0,1.0,
+		1.0,0.0,0.0,1.0,
+		1.0,0.0,0.0,1.0,
+		1.0,0.0,0.0,1.0,
+		1.0,0.0,0.0,1.0,
+		1.0,0.0,0.0,1.0,
+
+		0.0,1.0,0.0,1.0,
+		0.0,1.0,0.0,1.0,
+		0.0,1.0,0.0,1.0,
+		0.0,1.0,0.0,1.0,
+		0.0,1.0,0.0,1.0,
+		0.0,1.0,0.0,1.0,
+
+		0.0,0.0,1.0,1.0,
+		0.0,0.0,1.0,1.0,
+		0.0,0.0,1.0,1.0,
+		0.0,0.0,1.0,1.0,
+		0.0,0.0,1.0,1.0,
+		0.0,0.0,1.0,1.0
+
+
 	};
 
 	glGenBuffers(1,&buffer);
 	glBindBuffer(GL_ARRAY_BUFFER,buffer);
-	glBufferData(GL_ARRAY_BUFFER,sizeof(vertices),vertices,GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER,sizeof(vertexData),vertexData,GL_STATIC_DRAW);
 	
 	loadShaders();
 
 	glUseProgram(program);
-	glVertexAttribPointer(0,4,GL_FLOAT,GL_FALSE,0,(void*)0);
+	
 	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+
+	glVertexAttribPointer(0,4,GL_FLOAT,GL_FALSE,0,(void*)0);
+	glVertexAttribPointer(1,4,GL_FLOAT,GL_FALSE,0,(void*)288);
+
 
 	glClearColor(1.0,1.0,1.0,1.0);
 
@@ -125,9 +169,12 @@ void display()
 {
 	glClear(GL_COLOR_BUFFER_BIT);
 	glBindVertexArray(vao);
+	Matrix4x4 mat;
+	mat.setPerspective(75,1.0,0.1,100);
+	mat.setMatrixToProgram(program,"perspectiveMatrix");
 	GLint loc = glGetUniformLocation(program,"offset");
 	glUniform2f(loc,offsetX,offsetY);
-	glDrawArrays(GL_TRIANGLES,0,6);
+	glDrawArrays(GL_TRIANGLES,0,18);
 
 	glFlush();
 
