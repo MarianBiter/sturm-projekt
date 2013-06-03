@@ -34,7 +34,7 @@ public:
 	double operator* (const Vector3D& b) const;
 	Vector3D operator^ (const Vector3D& v) const;
 	void normalize(void);
-	Vector3D& normalized() const;
+	Vector3D normalized() const;
 	Vector3D& hat(void);
 };
 
