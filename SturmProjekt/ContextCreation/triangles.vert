@@ -7,7 +7,7 @@ uniform mat4 perspectiveMatrix;
 smooth out vec4 theColor;
 void main()
 {
-	vec4 aux = vec4(offset.x,offset.y,0.0,-10.0);
+	vec4 aux = vec4(offset.x,offset.y,-10.0,0.0);
     vec4 newPos = vPosition + aux;
 	gl_Position = perspectiveMatrix * newPos;
 	theColor = color;

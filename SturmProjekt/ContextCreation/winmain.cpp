@@ -170,7 +170,7 @@ void display()
 	glClear(GL_COLOR_BUFFER_BIT);
 	glBindVertexArray(vao);
 	Matrix4x4 mat;
-	mat.setPerspective(75,1.0,0.1,100);
+	mat.setPerspective(75,1.0,0.1,101);
 	mat.setMatrixToProgram(program,"perspectiveMatrix");
 	GLint loc = glGetUniformLocation(program,"offset");
 	glUniform2f(loc,offsetX,offsetY);
