@@ -53,8 +53,8 @@ void Matrix4x4::setPerspective(float fovy,float aspect,float znear,float zfar)
 	m_matrixEntries[0] = (2.0*znear)/(right-left);
 	m_matrixEntries[1*4+1] = (2.0*znear)/(top - bottom);
 	m_matrixEntries[2*4+2] = -(zfar + znear)/(zfar-znear);
+	m_matrixEntries[3*4+2] = - (2.0 * zfar * znear) / (zfar- znear);
 	m_matrixEntries[2*4+3] = -1.0;
-	m_matrixEntries[2*3+2] = - (2.0 * zfar * znear) / (zfar- znear);
 
 }
 
