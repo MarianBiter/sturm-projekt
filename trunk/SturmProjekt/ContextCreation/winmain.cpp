@@ -107,11 +107,11 @@ void initScene()
 		0.5,0.5,-0.5,1.0,
 		0.5,-0.5,-0.5,1.0,
 
-		0.5,0.5,-0.5,1.0,
-		0.5,-0.5,-0.5,1.0,
-		0.5,-0.5,-0.5,1.0,
-		0.5,0.5,-0.5,1.0,
 		0.5,0.5,0.5,1.0,
+		0.5,-0.5,-0.5,1.0,
+		0.5,-0.5,0.5,1.0,
+		0.5,0.5,0.5,1.0,
+		0.5,0.5,-0.5,1.0,
 		0.5,-0.5,-0.5,1.0,
 
 		-0.5,0.5,0.5,1.0,
@@ -120,6 +120,27 @@ void initScene()
 		-0.5,0.5,0.5,1.0,
 		0.5,0.5,0.5,1.0,
 		0.5,0.5,-0.5,1.0,
+
+		-0.5,0.5,0.5,1.0,
+		-0.5,-0.5,0.5,1.0,
+		0.5,-0.5,0.5,1.0,
+		0.5,0.5,0.5,1.0,
+		0.5,-0.5,0.5,1.0,
+		-0.5,0.5,0.5,1.0,
+
+		-0.5,-0.5,0.5,1.0,
+		-0.5,-0.5,-0.5,1.0,
+		0.5,-0.5,0.5,1.0,
+		-0.5,-0.5,-0.5,1.0,
+		0.5,-0.5,-0.5,1.0,
+		0.5,-0.5,0.5,1.0,
+
+		-0.5,0.5,0.5,1.0,
+		-0.5,-0.5,0.5,1.0,
+		-0.5,-0.5,-0.5,1.0,
+		-0.5,0.5,-0.5,1.0,
+		-0.5,0.5,0.5,1.0,
+		-0.5,-0.5,-0.5,1.0,
 
 		//vertex color
 		1.0,0.0,0.0,1.0,
@@ -141,8 +162,28 @@ void initScene()
 		0.0,0.0,1.0,1.0,
 		0.0,0.0,1.0,1.0,
 		0.0,0.0,1.0,1.0,
-		0.0,0.0,1.0,1.0
+		0.0,0.0,1.0,1.0,
 
+		1.0,1.0,0.0,1.0,
+		1.0,1.0,0.0,1.0,
+		1.0,1.0,0.0,1.0,
+		1.0,1.0,0.0,1.0,
+		1.0,1.0,0.0,1.0,
+		1.0,1.0,0.0,1.0,
+
+		0.0,1.0,1.0,1.0,
+		0.0,1.0,1.0,1.0,
+		0.0,1.0,1.0,1.0,
+		0.0,1.0,1.0,1.0,
+		0.0,1.0,1.0,1.0,
+		0.0,1.0,1.0,1.0,
+
+		0.0,0.0,0.0,1.0,
+		0.0,0.0,0.0,1.0,
+		0.0,0.0,0.0,1.0,
+		0.0,0.0,0.0,1.0,
+		0.0,0.0,0.0,1.0,
+		0.0,0.0,0.0,1.0,
 
 	};
 
@@ -158,23 +199,32 @@ void initScene()
 	glEnableVertexAttribArray(1);
 
 	glVertexAttribPointer(0,4,GL_FLOAT,GL_FALSE,0,(void*)0);
-	glVertexAttribPointer(1,4,GL_FLOAT,GL_FALSE,0,(void*)288);
+	glVertexAttribPointer(1,4,GL_FLOAT,GL_FALSE,0,(void*)576);
 
+	Matrix4x4 mat;
+	mat.setPerspective(75,1.0,0.1,101);
+	mat.setMatrixToProgram(program,"perspectiveMatrix");
+	Matrix4x4 viewMat;
+	viewMat.setLookAt(Point3D(5.0,5.0,5.0),Point3D(0.0,0.0,0.0),Vector3D(0,1,0));
+	viewMat.setMatrixToProgram(program,"viewMatrix");
 
 	glClearColor(1.0,1.0,1.0,1.0);
+	
+	glEnable(GL_DEPTH_TEST);
+	glDepthMask(GL_TRUE);
+	glDepthFunc(GL_LEQUAL);
+	glDepthRange(0.0f, 1.0f);
+	glClearDepth(1.0f);
 
 }
 
 void display()
 {
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glBindVertexArray(vao);
-	Matrix4x4 mat;
-	mat.setPerspective(75,1.0,0.1,101);
-	mat.setMatrixToProgram(program,"perspectiveMatrix");
 	GLint loc = glGetUniformLocation(program,"offset");
 	glUniform2f(loc,offsetX,offsetY);
-	glDrawArrays(GL_TRIANGLES,0,18);
+	glDrawArrays(GL_TRIANGLES,0,36);
 
 	glFlush();
 

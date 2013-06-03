@@ -44,7 +44,7 @@ void Vector3D::normalize(void)
 	x /= length; y /= length; z /= length;
 }
 
-Vector3D& Vector3D::normalized() const
+Vector3D Vector3D::normalized() const
 {
 	double length = sqrt(x * x + y * y + z * z);
 	Vector3D rez(x/length,y/length,z/length);
