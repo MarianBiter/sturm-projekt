@@ -11,6 +11,7 @@
 
 GLuint vao;
 GLuint buffer;
+GLuint elemBuffer;
 GLuint vertexShader;
 GLuint fragmentShader;
 GLuint program;
@@ -100,97 +101,48 @@ void initScene()
 
 	GLfloat vertexData[] =
 	{
-		-0.5,0.5,-0.5,1.0,
-		0.5,-0.5,-0.5,1.0,
-		-0.5,-0.5,-0.5,1.0,
-		-0.5,0.5,-0.5,1.0,
-		0.5,0.5,-0.5,1.0,
-		0.5,-0.5,-0.5,1.0,
-
 		0.5,0.5,0.5,1.0,
-		0.5,-0.5,-0.5,1.0,
 		0.5,-0.5,0.5,1.0,
-		0.5,0.5,0.5,1.0,
-		0.5,0.5,-0.5,1.0,
-		0.5,-0.5,-0.5,1.0,
-
-		-0.5,0.5,0.5,1.0,
-		0.5,0.5,-0.5,1.0,
-		-0.5,0.5,-0.5,1.0,
-		-0.5,0.5,0.5,1.0,
-		0.5,0.5,0.5,1.0,
-		0.5,0.5,-0.5,1.0,
-
-		-0.5,0.5,0.5,1.0,
 		-0.5,-0.5,0.5,1.0,
-		0.5,-0.5,0.5,1.0,
-		0.5,0.5,0.5,1.0,
-		0.5,-0.5,0.5,1.0,
 		-0.5,0.5,0.5,1.0,
-
-		-0.5,-0.5,0.5,1.0,
-		-0.5,-0.5,-0.5,1.0,
-		0.5,-0.5,0.5,1.0,
-		-0.5,-0.5,-0.5,1.0,
-		0.5,-0.5,-0.5,1.0,
-		0.5,-0.5,0.5,1.0,
-
-		-0.5,0.5,0.5,1.0,
-		-0.5,-0.5,0.5,1.0,
-		-0.5,-0.5,-0.5,1.0,
 		-0.5,0.5,-0.5,1.0,
-		-0.5,0.5,0.5,1.0,
+		0.5,0.5,-0.5,1.0,
+		0.5,-0.5,-0.5,1.0,
 		-0.5,-0.5,-0.5,1.0,
-
-		//vertex color
 		1.0,0.0,0.0,1.0,
-		1.0,0.0,0.0,1.0,
-		1.0,0.0,0.0,1.0,
-		1.0,0.0,0.0,1.0,
-		1.0,0.0,0.0,1.0,
-		1.0,0.0,0.0,1.0,
-
 		0.0,1.0,0.0,1.0,
-		0.0,1.0,0.0,1.0,
-		0.0,1.0,0.0,1.0,
-		0.0,1.0,0.0,1.0,
-		0.0,1.0,0.0,1.0,
-		0.0,1.0,0.0,1.0,
+		0.0,0.0,1.0,1.0,
+		1.0,1.0,0.0,1.0,
+		1.0,0.0,1.0,1.0,
+		0.0,1.0,1.0,1.0,
+		0.0,0.0,0.0,1.0,
+		0.0,0.0,0.0,1.0
 
-		0.0,0.0,1.0,1.0,
-		0.0,0.0,1.0,1.0,
-		0.0,0.0,1.0,1.0,
-		0.0,0.0,1.0,1.0,
-		0.0,0.0,1.0,1.0,
-		0.0,0.0,1.0,1.0,
+	};
 
-		1.0,1.0,0.0,1.0,
-		1.0,1.0,0.0,1.0,
-		1.0,1.0,0.0,1.0,
-		1.0,1.0,0.0,1.0,
-		1.0,1.0,0.0,1.0,
-		1.0,1.0,0.0,1.0,
-
-		0.0,1.0,1.0,1.0,
-		0.0,1.0,1.0,1.0,
-		0.0,1.0,1.0,1.0,
-		0.0,1.0,1.0,1.0,
-		0.0,1.0,1.0,1.0,
-		0.0,1.0,1.0,1.0,
-
-		0.0,0.0,0.0,1.0,
-		0.0,0.0,0.0,1.0,
-		0.0,0.0,0.0,1.0,
-		0.0,0.0,0.0,1.0,
-		0.0,0.0,0.0,1.0,
-		0.0,0.0,0.0,1.0,
-
+	GLuint elementData[] =
+	{
+		0,3,1,
+		3,2,1,
+		5,0,6,
+		6,0,1,
+		5,4,0,
+		4,3,0,
+		4,7,3,
+		7,2,3,
+		7,4,5,
+		5,6,7,
+		6,1,7,
+		7,1,2
 	};
 
 	glGenBuffers(1,&buffer);
 	glBindBuffer(GL_ARRAY_BUFFER,buffer);
 	glBufferData(GL_ARRAY_BUFFER,sizeof(vertexData),vertexData,GL_STATIC_DRAW);
 	
+	glGenBuffers(1,&elemBuffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,elemBuffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER,sizeof(elementData),elementData,GL_STATIC_DRAW);
 	loadShaders();
 
 	glUseProgram(program);
@@ -199,10 +151,11 @@ void initScene()
 	glEnableVertexAttribArray(1);
 
 	glVertexAttribPointer(0,4,GL_FLOAT,GL_FALSE,0,(void*)0);
-	glVertexAttribPointer(1,4,GL_FLOAT,GL_FALSE,0,(void*)576);
+	int colorDataOffset = 8*sizeof(float)*4;
+	glVertexAttribPointer(1,4,GL_FLOAT,GL_FALSE,0,(void*)colorDataOffset);
 
 	Matrix4x4 mat;
-	mat.setPerspective(75,1.0,0.1,101);
+	mat.setPerspective(80,1.0,0.1,101);
 	mat.setMatrixToProgram(program,"perspectiveMatrix");
 	Matrix4x4 viewMat;
 	viewMat.setLookAt(Point3D(5.0,5.0,5.0),Point3D(0.0,0.0,0.0),Vector3D(0,1,0));
@@ -224,7 +177,7 @@ void display()
 	glBindVertexArray(vao);
 	GLint loc = glGetUniformLocation(program,"offset");
 	glUniform2f(loc,offsetX,offsetY);
-	glDrawArrays(GL_TRIANGLES,0,36);
+	glDrawElements(GL_TRIANGLES,36,GL_UNSIGNED_INT,0);
 
 	glFlush();
 
