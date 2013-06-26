@@ -168,21 +168,26 @@ void initScene()
 	glDepthFunc(GL_LEQUAL);
 	glDepthRange(0.0f, 1.0f);
 	glClearDepth(1.0f);
-
+	glBindVertexArray(vao);
 }
 
 void display()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glBindVertexArray(vao);
+	
 	GLint loc = glGetUniformLocation(program,"offset");
 	glUniform2f(loc,offsetX,offsetY);
 	glDrawElements(GL_TRIANGLES,36,GL_UNSIGNED_INT,0);
 
-	glFlush();
-
 }
 
+bool isDoubleBufferingEnabled(HDC hdc,int pixelFormat)
+{
+	int attrib = WGL_DOUBLE_BUFFER_ARB;
+	int value;
+	wglGetPixelFormatAttribivARB(hdc,pixelFormat,0,1,&attrib,&value);
+	return (bool)value;
+}
 int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance,PSTR szCmdLine, int iCmdShow)
 {
 
@@ -255,7 +260,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance,PSTR szCmdLine,
     {
         sizeof(PIXELFORMATDESCRIPTOR),
         1,
-        PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,    
+        PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL,    
         PFD_TYPE_RGBA,            
         32,                        
         0, 0, 0, 0, 0, 0,
@@ -316,12 +321,14 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance,PSTR szCmdLine,
 	UINT numFormats;
 	BOOL valid = wglChoosePixelFormatARB(hDC,attributesPixelFormat,fAttributes,1,&iPixelFormat,&numFormats);
 
+	bool dblBuff = isDoubleBufferingEnabled(hDC,iPixelFormat);
+
 	SetPixelFormat( hDC, iPixelFormat, NULL);
 
 
 	int attributesContext[] = { WGL_CONTEXT_MAJOR_VERSION_ARB,4,
 								WGL_CONTEXT_MINOR_VERSION_ARB,3,
-								/*WGL_CONTEXT_FLAGS_ARB,WGL_CONTEXT_DEBUG_BIT_ARB,*/
+								WGL_CONTEXT_FLAGS_ARB,WGL_CONTEXT_DEBUG_BIT_ARB,
 								WGL_CONTEXT_PROFILE_MASK_ARB,WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
 								0};
 
