@@ -1,4 +1,5 @@
 #include "windows.h"
+#include <Windowsx.h>
 #include "GL\glew.h"
 #include "GL\wglew.h"
 #include <tchar.h>
@@ -8,7 +9,7 @@
 #include <sstream>
 #include "Matrix4x4.h"
 
-
+HWND hWnd;
 GLuint vao;
 GLuint buffer;
 GLuint elemBuffer;
@@ -17,6 +18,9 @@ GLuint fragmentShader;
 GLuint program;
 float offsetX = 0.0;
 float offsetY = 0.0;
+unsigned int mousePosX;
+unsigned int mousePosY;
+GLint mousePosUniformLoc;
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -61,6 +65,7 @@ void loadShaders()
 	glGetShaderiv(vertexShader,GL_COMPILE_STATUS,&retVal);
 	if(retVal != GL_TRUE)
 	{
+		MessageBox(NULL, L"Failed to compile/nvertex shader", L"Achtung", MB_OK);
 		GLchar* errorMsg = getShaderCompileError(vertexShader);
 		delete[] errorMsg;
 	}
@@ -72,6 +77,7 @@ void loadShaders()
 	glGetShaderiv(fragmentShader,GL_COMPILE_STATUS,&retVal);
 	if(retVal != GL_TRUE)
 	{
+		MessageBox(NULL, L"Failed to compile/nfragment shader", L"Achtung", MB_OK);
 		GLchar* errorMsg = getShaderCompileError(fragmentShader);
 		delete[] errorMsg;
 	}
@@ -87,7 +93,7 @@ void loadShaders()
 	if(retVal!= GL_TRUE)
 	{
 		GLchar* errorMsg = getProgramLinkError(program);
-		delete[] errorMsg;
+		//delete[] errorMsg;
 	}
 
 	
@@ -96,31 +102,28 @@ void loadShaders()
 
 void initScene()
 {
-	glGenVertexArrays(1,&vao);
-	glBindVertexArray(vao);
 
-	GLfloat vertexData[] =
-	{
-		0.5,0.5,0.5,1.0,
-		0.5,-0.5,0.5,1.0,
-		-0.5,-0.5,0.5,1.0,
-		-0.5,0.5,0.5,1.0,
-		-0.5,0.5,-0.5,1.0,
-		0.5,0.5,-0.5,1.0,
-		0.5,-0.5,-0.5,1.0,
-		-0.5,-0.5,-0.5,1.0,
-		1.0,0.0,0.0,1.0,
-		0.0,1.0,0.0,1.0,
-		0.0,0.0,1.0,1.0,
-		1.0,1.0,0.0,1.0,
-		1.0,0.0,1.0,1.0,
-		0.0,1.0,1.0,1.0,
-		0.0,0.0,0.0,1.0,
-		0.0,0.0,0.0,1.0
+	//const float vertexPositions[] = {
+	//	0.75f, 0.75f, 0.0f, 1.0f,
+	//	0.75f, -0.75f, 0.0f, 1.0f,
+	//	-0.75f, -0.75f, 0.0f, 1.0f,
+	//	0.75f, 0.75f, 0.0f, 1.0f,
+	//	-0.75f, -0.75f, 0.0f, 1.0f,
+	//	-0.75f, 0.75f, 0.0f, 1.0f,
+
+	//};
+
+	const float vertexPositions[] = {
+		1.0f, 1.0f, 0.0f, 1.0f,
+		1.0f, -1.0f, 0.0f, 1.0f,
+		-1.0f, -1.0f, 0.0f, 1.0f,
+		1.0f, 1.0f, 0.0f, 1.0f,
+		-1.0f, -1.0f, 0.0f, 1.0f,
+		-1.0f, 1.0f, 0.0f, 1.0f,
 
 	};
 
-	GLuint elementData[] =
+	/*GLuint elementData[] =
 	{
 		0,3,1,
 		3,2,1,
@@ -134,60 +137,62 @@ void initScene()
 		5,6,7,
 		6,1,7,
 		7,1,2
-	};
+	};*/
 
-	glGenBuffers(1,&buffer);
-	glBindBuffer(GL_ARRAY_BUFFER,buffer);
-	glBufferData(GL_ARRAY_BUFFER,sizeof(vertexData),vertexData,GL_STATIC_DRAW);
-	
-	glGenBuffers(1,&elemBuffer);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,elemBuffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER,sizeof(elementData),elementData,GL_STATIC_DRAW);
+	glGenBuffers(1, &buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, buffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertexPositions), vertexPositions, GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	//glGenBuffers(1,&elemBuffer);
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,elemBuffer);
+	//glBufferData(GL_ELEMENT_ARRAY_BUFFER,sizeof(elementData),elementData,GL_STATIC_DRAW);
 	loadShaders();
 
-	glUseProgram(program);
-	
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
+	mousePosUniformLoc = glGetUniformLocation(program, "mousePosition");
 
-	glVertexAttribPointer(0,4,GL_FLOAT,GL_FALSE,0,(void*)0);
-	int colorDataOffset = 8*sizeof(float)*4;
-	glVertexAttribPointer(1,4,GL_FLOAT,GL_FALSE,0,(void*)colorDataOffset);
-
-	Matrix4x4 mat;
-	mat.setPerspective(80,1.0,0.1,101);
-	mat.setMatrixToProgram(program,"perspectiveMatrix");
-	Matrix4x4 viewMat;
-	viewMat.setLookAt(Point3D(5.0,5.0,5.0),Point3D(0.0,0.0,0.0),Vector3D(0,1,0));
-	viewMat.setMatrixToProgram(program,"viewMatrix");
-
-	glClearColor(1.0,1.0,1.0,1.0);
-	
-	glEnable(GL_DEPTH_TEST);
-	glDepthMask(GL_TRUE);
-	glDepthFunc(GL_LEQUAL);
-	glDepthRange(0.0f, 1.0f);
-	glClearDepth(1.0f);
+	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
+
+	RECT rect;
+	GetClientRect(hWnd, &rect);
+	int x=0; x++;
 }
 
 void display()
 {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	
-	GLint loc = glGetUniformLocation(program,"offset");
-	glUniform2f(loc,offsetX,offsetY);
-	glDrawElements(GL_TRIANGLES,36,GL_UNSIGNED_INT,0);
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	POINT pos;
+	GetCursorPos(&pos);
+
+	ScreenToClient(hWnd, &pos);
+
+	glUseProgram(program);
+
+	if (mousePosUniformLoc != -1)
+	{
+		glUniform4f(mousePosUniformLoc,
+			pos.x,
+			611 - pos.y,
+			0.0,
+			0.0);
+		GLenum val = glGetError();
+	}
+
+
+	glBindBuffer(GL_ARRAY_BUFFER, buffer);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0);
+
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	glDisableVertexAttribArray(0);
+	glUseProgram(0);
 
 }
 
-bool isDoubleBufferingEnabled(HDC hdc,int pixelFormat)
-{
-	int attrib = WGL_DOUBLE_BUFFER_ARB;
-	int value;
-	wglGetPixelFormatAttribivARB(hdc,pixelFormat,0,1,&attrib,&value);
-	return (bool)value;
-}
 int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance,PSTR szCmdLine, int iCmdShow)
 {
 
@@ -210,7 +215,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance,PSTR szCmdLine,
 
 	RegisterClassEx(&winclass);
 	
-	HWND hWnd = CreateWindowEx(	NULL,
+	hWnd = CreateWindowEx(	NULL,
 								L"OPENGL",
 								L"4.3 Context creation",
 								WS_OVERLAPPEDWINDOW,
@@ -307,21 +312,21 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance,PSTR szCmdLine,
 
 
 	int attributesPixelFormat[] = { WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
-									WGL_SUPPORT_OPENGL_ARB,	GL_TRUE,
-									WGL_ACCELERATION_ARB, WGL_FULL_ACCELERATION_ARB,
-									WGL_COLOR_BITS_ARB, 32,
-									WGL_ALPHA_BITS_ARB, 0,
-									WGL_DEPTH_BITS_ARB, 24,
-									WGL_STENCIL_BITS_ARB, 8,
-									WGL_DOUBLE_BUFFER_ARB,GL_TRUE,
-									WGL_SWAP_METHOD_ARB,WGL_SWAP_EXCHANGE_ARB,
+		WGL_SUPPORT_OPENGL_ARB, GL_TRUE,
+		WGL_DOUBLE_BUFFER_ARB, GL_TRUE,
+		WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB,
+		WGL_COLOR_BITS_ARB, 32,
+		WGL_DEPTH_BITS_ARB, 24,
+		WGL_STENCIL_BITS_ARB, 8,
+		WGL_SAMPLE_BUFFERS_ARB, 1,
+		WGL_SAMPLES_ARB, 16,
 									0};
 	float fAttributes[] = { 0, 0 };
 	int iPixelFormat;
 	UINT numFormats;
 	BOOL valid = wglChoosePixelFormatARB(hDC,attributesPixelFormat,fAttributes,1,&iPixelFormat,&numFormats);
 
-	bool dblBuff = isDoubleBufferingEnabled(hDC,iPixelFormat);
+	//bool dblBuff = isDoubleBufferingEnabled(hDC,iPixelFormat);
 
 	SetPixelFormat( hDC, iPixelFormat, NULL);
 
@@ -368,8 +373,12 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance,PSTR szCmdLine,
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+
 	switch (msg)
     {		
+		case WM_SIZE:
+			glViewport(0, 0, LOWORD(lParam), HIWORD(lParam));
+			break;
         case WM_CLOSE:
 			PostQuitMessage(0);
 			break;

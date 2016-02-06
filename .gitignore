@@ -2,3 +2,7 @@ SturmProjekt/ContextCreation/Debug
 *.opensdf
 *.sdf
 SturmProjekt/Debug
+SturmProjekt/Release
+SturmProjekt/x64
+SturmProjekt/ContextCreation/Release
+SturmProjekt/ContextCreation/x64
