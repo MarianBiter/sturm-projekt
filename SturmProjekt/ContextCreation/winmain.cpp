@@ -7,7 +7,12 @@
 #include <cstdlib>
 #include <fstream>
 #include <sstream>
-#include "Matrix4x4.h"
+#include <glm.hpp>
+#include <gtc\matrix_transform.hpp>
+#include <gtc\type_ptr.hpp>
+#include <cmath>
+#include "HighResTimer.h"
+
 
 HWND hWnd;
 GLuint vao;
@@ -21,6 +26,16 @@ float offsetY = 0.0;
 unsigned int mousePosX;
 unsigned int mousePosY;
 GLint mousePosUniformLoc;
+GLint modelLoc;
+GLint viewLoc;
+GLint perspectivelLoc;
+glm::mat4 modelView;
+glm::mat4 perspective;
+HighResTimer timer;
+glm::mat4 view;
+glm::mat4 model;
+float rotationDegree = 0.0f;
+
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -102,62 +117,74 @@ void loadShaders()
 
 void initScene()
 {
-
-	//const float vertexPositions[] = {
-	//	0.75f, 0.75f, 0.0f, 1.0f,
-	//	0.75f, -0.75f, 0.0f, 1.0f,
-	//	-0.75f, -0.75f, 0.0f, 1.0f,
-	//	0.75f, 0.75f, 0.0f, 1.0f,
-	//	-0.75f, -0.75f, 0.0f, 1.0f,
-	//	-0.75f, 0.75f, 0.0f, 1.0f,
-
-	//};
-
 	const float vertexPositions[] = {
-		1.0f, 1.0f, 1.0f, 1.0f,
-		1.0f, -1.0f, 1.0f, 1.0f,
-		-1.0f, -1.0f, 1.0f, 1.0f,
-		1.0f, 1.0f, 1.0f, 1.0f,
-		-1.0f, -1.0f, 1.0f, 1.0f,
-		-1.0f, 1.0f, 1.0f, 1.0f,
-		1.0f, 1.0f, 1.0f, 1.0f,
+		-1.0,1.0,-1.0,1.0,
+		1.0,1.0,-1.0,1.0,
 
+		1.0,1.0,-1.0,1.0,
+		1.0,-1.0,-1.0,1.0,
+
+		1.0,-1.0,-1.0,1.0,
+		-1.0,-1.0,-1.0,1.0,
+
+		-1.0,-1.0,-1.0,1.0,
+		-1.0,1.0,-1.0,1.0,
+
+		-1.0,1.0,-1.0,1.0,
+		-1.0,1.0,1.0,1.0,
+
+		-1.0,1.0,1.0,1.0,
+		-1.0,-1.0,1.0,1.0,
+
+		-1.0,-1.0,1.0,1.0,
+		-1.0,-1.0,-1.0,1.0,
+
+		-1.0,1.0,1.0,1.0,
+		1.0,1.0,1.0,1.0,
+
+		1.0,1.0,1.0,1.0,
+		1.0,-1.0,1.0,1.0,
+
+		1.0,-1.0,1.0,1.0,
+		-1.0,-1.0,1.0,1.0,
+
+		1.0,1.0,1.0,1.0,
+		1.0,1.0,-1.0,1.0,
+
+		1.0,-1.0,1.0,1.0,
+		1.0,-1.0,-1.0,1.0
 	};
-
-	/*GLuint elementData[] =
-	{
-		0,3,1,
-		3,2,1,
-		5,0,6,
-		6,0,1,
-		5,4,0,
-		4,3,0,
-		4,7,3,
-		7,2,3,
-		7,4,5,
-		5,6,7,
-		6,1,7,
-		7,1,2
-	};*/
 
 	glGenBuffers(1, &buffer);
 	glBindBuffer(GL_ARRAY_BUFFER, buffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertexPositions), vertexPositions, GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	//glGenBuffers(1,&elemBuffer);
-	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,elemBuffer);
-	//glBufferData(GL_ELEMENT_ARRAY_BUFFER,sizeof(elementData),elementData,GL_STATIC_DRAW);
 	loadShaders();
 
 	mousePosUniformLoc = glGetUniformLocation(program, "mousePosition");
 
+	modelLoc = glGetUniformLocation(program, "model");
+
+	viewLoc = glGetUniformLocation(program, "view");
+
+	perspectivelLoc = glGetUniformLocation(program, "perspective");
+
+	view = glm::lookAt(glm::vec3(7.0f, 7.0f, 7.0f),
+							glm::vec3(0.0f, 0.0f, 0.0f),
+							glm::vec3(0.0f, 1.0f, 0.0f));	
+
+	perspective = glm::perspective(glm::radians(60.0f), 16.0f/9.0f, 0.00001f, 10000.0f);
+
+	glUseProgram(program);
+	glUniformMatrix4fv(perspectivelLoc, 1, GL_FALSE, glm::value_ptr(perspective));
+	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+	glUseProgram(0);
+
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 
-	RECT rect;
-	GetClientRect(hWnd, &rect);
-	int x=0; x++;
+	timer.StartTimer();
 }
 
 void display()
@@ -170,13 +197,22 @@ void display()
 
 	ScreenToClient(hWnd, &pos);
 
+	double elapsed = timer.GetElapsedTimeMs();
+
 	glUseProgram(program);
+
+	rotationDegree += elapsed / 10000.0f * 360.0;
+	rotationDegree = std::fmod(rotationDegree,360.0);
+
+	model = glm::rotate(glm::mat4(1.0f), glm::radians(rotationDegree), glm::vec3(0.0f, 1.0f, 0.0f));
+
+	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
 	if (mousePosUniformLoc != -1)
 	{
 		glUniform4f(mousePosUniformLoc,
 			pos.x,
-			611 - pos.y,
+			433 - pos.y,
 			0.0,
 			0.0);
 		GLenum val = glGetError();
@@ -187,7 +223,7 @@ void display()
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0);
 
-	glDrawArrays(GL_LINE_STRIP, 0, 7);
+	glDrawArrays(GL_LINES, 0, 24);
 
 	glDisableVertexAttribArray(0);
 	glUseProgram(0);
@@ -198,8 +234,8 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance,PSTR szCmdLine,
 {
 
 	WNDCLASSEX winclass;
-	USHORT width = 650;
-	USHORT height = 650;
+	USHORT width = 800;
+	USHORT height = 450;
 
 	winclass.cbSize = sizeof(WNDCLASSEX);
 	winclass.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
@@ -312,7 +348,8 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance,PSTR szCmdLine,
 	UnregisterClass(_T("DUMMY"),dummyWinclass.hInstance);
 
 
-	int attributesPixelFormat[] = { WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
+	int attributesPixelFormat[] = { 
+		WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
 		WGL_SUPPORT_OPENGL_ARB, GL_TRUE,
 		WGL_DOUBLE_BUFFER_ARB, GL_TRUE,
 		WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB,
@@ -321,7 +358,8 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance,PSTR szCmdLine,
 		WGL_STENCIL_BITS_ARB, 8,
 		WGL_SAMPLE_BUFFERS_ARB, 1,
 		WGL_SAMPLES_ARB, 16,
-									0};
+		0};
+
 	float fAttributes[] = { 0, 0 };
 	int iPixelFormat;
 	UINT numFormats;
@@ -341,6 +379,12 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance,PSTR szCmdLine,
 	HGLRC hGLRC = wglCreateContextAttribsARB(hDC,NULL,attributesContext);
 
 	wglMakeCurrent(hDC,hGLRC);
+
+	err = glewInit();
+	if (GLEW_OK != err)
+	{
+		MessageBox(NULL, _T("Could not initialize GLEW"), _T("GLEW failed"), MB_OK);
+	}
 
 	const GLubyte* string = glGetString(GL_VERSION);
 

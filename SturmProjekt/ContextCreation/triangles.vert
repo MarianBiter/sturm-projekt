@@ -1,9 +1,14 @@
 #version 330 core
 
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 perspective;
+
 layout (location = 0) in vec4 vPosition;
+
+
+
 void main()
 {
-	vec4 scaledPosition = vPosition * vec4(0.5f,0.5f,1.0f,1.0f);
-	scaledPosition.w =1.0f;
-	gl_Position = scaledPosition;
+	gl_Position = perspective * view  * model * vPosition ;
 }
